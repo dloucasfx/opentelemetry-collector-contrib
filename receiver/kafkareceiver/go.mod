@@ -6,7 +6,7 @@ require (
 	github.com/Shopify/sarama v1.37.2
 	github.com/apache/thrift v0.17.0
 	github.com/gogo/protobuf v1.3.2
-	github.com/jaegertracing/jaeger v1.39.0
+	github.com/jaegertracing/jaeger v1.39.1-0.20221110195127-14c11365a856
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/kafkaexporter v0.64.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.64.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.64.0
@@ -14,9 +14,9 @@ require (
 	github.com/openzipkin/zipkin-go v0.4.1
 	github.com/stretchr/testify v1.8.1
 	go.opencensus.io v0.24.0
-	go.opentelemetry.io/collector v0.64.0
-	go.opentelemetry.io/collector/pdata v0.64.0
-	go.opentelemetry.io/collector/semconv v0.64.0
+	go.opentelemetry.io/collector v0.64.2-0.20221115155901-1550938c18fd
+	go.opentelemetry.io/collector/pdata v0.64.2-0.20221115155901-1550938c18fd
+	go.opentelemetry.io/collector/semconv v0.64.2-0.20221115155901-1550938c18fd
 	go.uber.org/zap v1.23.0
 )
 
@@ -62,9 +62,9 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2 // indirect
 	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	google.golang.org/genproto v0.0.0-20221010155953-15ba04fc1c0e // indirect
+	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

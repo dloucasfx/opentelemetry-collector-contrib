@@ -6,14 +6,14 @@ require (
 	github.com/Shopify/sarama v1.37.2
 	github.com/aws/aws-sdk-go v1.44.133
 	github.com/gogo/protobuf v1.3.2
-	github.com/jaegertracing/jaeger v1.39.0
+	github.com/jaegertracing/jaeger v1.39.1-0.20221110195127-14c11365a856
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.64.0
 	github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/jaeger v0.64.0
 	github.com/stretchr/testify v1.8.1
 	github.com/xdg-go/scram v1.1.1
-	go.opentelemetry.io/collector v0.64.0
-	go.opentelemetry.io/collector/pdata v0.64.0
-	go.opentelemetry.io/collector/semconv v0.64.0
+	go.opentelemetry.io/collector v0.64.2-0.20221115155901-1550938c18fd
+	go.opentelemetry.io/collector/pdata v0.64.2-0.20221115155901-1550938c18fd
+	go.opentelemetry.io/collector/semconv v0.64.2-0.20221115155901-1550938c18fd
 	go.uber.org/multierr v1.8.0
 	go.uber.org/zap v1.23.0
 )
@@ -59,9 +59,9 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20220722155217-630584e8d5aa // indirect
 	golang.org/x/net v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
+	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

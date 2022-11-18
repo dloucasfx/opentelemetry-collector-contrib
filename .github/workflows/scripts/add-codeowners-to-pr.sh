@@ -23,14 +23,16 @@
 
 set -euo pipefail
 
-if [[ -z "${PR:-}" ]]; then
-    echo "PR has not been set, please ensure it is set."
+if [[ -z "${REPO:-}" || -z "${PR:-}" ]]; then
+    echo "One or more of REPO and PR have not been set, please ensure each is set."
     exit 0
 fi
 
 main () {
     CUR_DIRECTORY=$(dirname "$0")
-    FILES=$(gh pr view "${PR}" --json files | jq -r '.files[].path')
+    JSON=$(gh pr view "${PR}" --json "files,author")
+    AUTHOR=$(printf "${JSON}"| jq -r '.author.login')
+    FILES=$(printf "${JSON}"| jq -r '.files[].path')
     COMPONENTS=$(grep -oE '^[a-z]+/[a-z/]+ ' < .github/CODEOWNERS)
     REVIEWERS=""
     LABELS=""
@@ -60,12 +62,16 @@ main () {
 
             OWNERS=$(COMPONENT="${COMPONENT}" bash "${CUR_DIRECTORY}/get-codeowners.sh")
 
-            if [[ -n "${OWNERS}" ]]; then
+            for OWNER in ${OWNERS}; do
+                if [[ "${OWNER}" = "@${AUTHOR}" ]]; then
+                    continue
+                fi
+
                 if [[ -n "${REVIEWERS}" ]]; then
                     REVIEWERS+=","
                 fi
-                REVIEWERS+="$(echo "${OWNERS}" | sed 's/@//g' | sed 's/ /,/g')"
-            fi
+                REVIEWERS+=$(echo "${OWNER}" | sed -E 's/@(.+)/"\1"/')
+            done
 
             # Convert the CODEOWNERS entry to a label
             COMPONENT_CLEAN=$(echo "${COMPONENT}" | sed -E 's%/$%%')
@@ -79,11 +85,35 @@ main () {
         done
     done
 
-    gh pr edit "${PR}" --add-label "${LABELS}" || echo "Failed to add labels to #${PR}"
+    if [[ -n "${LABELS}" ]]; then
+        gh pr edit "${PR}" --add-label "${LABELS}" || echo "Failed to add labels to #${PR}"
+    else
+        echo "No labels found"
+    fi
 
     # Note that adding the labels above will not trigger any other workflows to
     # add code owners, so we have to do it here.
-    gh pr edit "${PR}" --add-reviewer "${REVIEWERS}" || echo "Failed to add reviewers to #${PR}"
+    #
+    # We have to use the GitHub API directly due to an issue with how the CLI
+    # handles PR updates that causes it require access to organization teams,
+    # and the GitHub token doesn't provide that permission.
+    # For more: https://github.com/cli/cli/issues/4844
+    #
+    # The GitHub API validates that authors are not requested to review, but
+    # accepts duplicate logins and logins that are already reviewers.
+    if [[ -n "${REVIEWERS}" ]]; then
+        curl \
+            --fail \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            "https://api.github.com/repos/${REPO}/pulls/${PR}/requested_reviewers" \
+            -d "{\"reviewers\":[${REVIEWERS}]}" \
+            | jq ".message" \
+            || echo "Failed to add reviewers to #${PR}"
+    else
+        echo "No code owners found"
+    fi
 }
 
 main || echo "Failed to run $0"
