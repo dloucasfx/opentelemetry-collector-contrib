@@ -16,6 +16,7 @@ package routingprocessor // import "github.com/open-telemetry/opentelemetry-coll
 
 import (
 	"context"
+	"fmt"
 
 	"go.opentelemetry.io/collector/component"
 	"go.opentelemetry.io/collector/config"
@@ -83,6 +84,25 @@ type metricsGroup struct {
 	metrics   pmetric.Metrics
 }
 
+var metricsMarshaler = pmetric.NewJSONMarshaler()
+
+func attrMapToString(m pcommon.Map) string {
+	out := ""
+	m.Range(func(k string, v pcommon.Value) bool {
+		out += "[" + k + "=" + v.Str() + "]"
+		return true
+	})
+	return out
+}
+
+func exportersToString(exporters []component.MetricsExporter) string {
+	out := ""
+	for _, e := range exporters {
+		out += "[" + fmt.Sprintf("%T", e) + "]"
+	}
+	return out
+}
+
 func (p *metricsProcessor) route(ctx context.Context, tm pmetric.Metrics) error {
 	// groups is used to group pmetric.ResourceMetrics that are routed to
 	// the same set of exporters. This way we're not ending up with all the
@@ -90,6 +110,15 @@ func (p *metricsProcessor) route(ctx context.Context, tm pmetric.Metrics) error 
 	groups := map[string]metricsGroup{}
 
 	var errs error
+
+	buf, err := metricsMarshaler.MarshalMetrics(tm)
+	if err != nil {
+		p.logger.Info("Failed to marshal routed metrics for logging",
+			zap.Error(err))
+	} else {
+		p.logger.Info("incoming metrics to routing processor",
+			zap.String("pdata", string(buf)))
+	}
 
 	for i := 0; i < tm.ResourceMetrics().Len(); i++ {
 		rmetrics := tm.ResourceMetrics().At(i)
@@ -100,24 +129,45 @@ func (p *metricsProcessor) route(ctx context.Context, tm pmetric.Metrics) error 
 			pcommon.InstrumentationScope{},
 			rmetrics.Resource(),
 		)
-
+		p.logger.Info("processing resource attributes",
+			zap.String("attributes", attrMapToString(rmetrics.Resource().Attributes())))
 		matchCount := len(p.router.routes)
 		for key, route := range p.router.routes {
 			if _, isMatch := route.expression.Execute(mtx); !isMatch {
+				p.logger.Info("no match for route condition",
+					zap.String("condition", key))
 				matchCount--
 				continue
 			}
 			p.group(key, groups, route.exporters, rmetrics)
+			p.logger.Info("matched route condition",
+				zap.String("condition", key))
+			p.logger.Info("matched route exporters",
+				zap.String("exporters", exportersToString(route.exporters)))
 		}
 
 		if matchCount == 0 {
 			// no route conditions are matched, add resource metrics to default exporters group
 			p.group("", groups, p.router.defaultExporters, rmetrics)
+			p.logger.Info("no matching route condition, using default exporter(s)")
+			p.logger.Info("default route exporters",
+				zap.String("default exporters", exportersToString(p.router.defaultExporters)))
 		}
 	}
 
-	for _, g := range groups {
+	for k, g := range groups {
+		p.logger.Info("routing condition", zap.String("condition", k))
 		for _, e := range g.exporters {
+			buf, err := metricsMarshaler.MarshalMetrics(g.metrics)
+			if err != nil {
+				p.logger.Info("Failed to marshal routed metrics for logging",
+					zap.String("exporter", fmt.Sprintf("%T", e)),
+					zap.Error(err))
+			} else {
+				p.logger.Info("routing metrics to exporter",
+					zap.String("exporter", fmt.Sprintf("%T", e)),
+					zap.String("pdata", string(buf)))
+			}
 			errs = multierr.Append(errs, e.ConsumeMetrics(ctx, g.metrics))
 		}
 	}
