@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -142,8 +143,16 @@ func (dc *DimensionClient) acceptDimension(dimUpdate *DimensionUpdate) error {
 			DimensionUpdate: dimUpdate,
 			TimeToSend:      dc.now().Add(dc.sendDelay),
 		}:
+			dc.logger.Debug(
+				"Added dimension to the delayed queue",
+				zap.String("dimension", dimUpdate.String()),
+			)
 			break
 		default:
+			dc.logger.Error(
+				"Could not add dimension update to the delayed queue.",
+				zap.String("bufferSize", strconv.Itoa(len(dc.delayedQueue))),
+			)
 			return errors.New("dropped dimension update, propertiesMaxBuffered exceeded")
 		}
 	}
