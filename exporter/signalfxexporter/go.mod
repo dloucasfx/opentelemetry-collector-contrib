@@ -2,6 +2,8 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/exporter/signal
 
 go 1.20
 
+replace go.opentelemetry.io/collector/config/confighttp => /Users/dlouca/Work/source/dlouca-opentelemetry-collector/config/confighttp
+
 require (
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/gobwas/glob v0.2.3
