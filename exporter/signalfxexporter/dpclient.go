@@ -148,6 +148,7 @@ func (s *sfxDPClient) postData(ctx context.Context, body io.Reader, headers map[
 
 	err = splunk.HandleHTTPCode(resp)
 	if err != nil {
+		s.logger.Error("SWAT-7165 HTTP Response Failure", zap.Error(err), zap.String("token", req.Header.Get(splunk.SFxAccessTokenHeader)))
 		return err
 	}
 	return nil
@@ -180,6 +181,9 @@ func (s *sfxDPClient) pushMetricsDataForToken(ctx context.Context, sfxDataPoints
 
 	err = s.postData(ctx, body, headers)
 	if err != nil {
+		if dataPointCount > 0 {
+			s.logger.Error("SWAT-7165 Sample", zap.String("DP", sfxDataPoints[0].String()))
+		}
 		return dataPointCount, err
 	}
 	return 0, nil
